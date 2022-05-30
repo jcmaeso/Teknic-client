@@ -42,7 +42,7 @@ class ResponsePosition(Response):
 
     @classmethod
     def fromBinaryData(self,bindata: bytearray = None):
-        return ResponsePosition(struct.unpack(self.binaryFormat,bytes(bindata)))
+        return ResponsePosition(struct.unpack(self.binaryFormat,bytes(bindata))[0])
 
 @dataclass
 class ResponseError(Response):
