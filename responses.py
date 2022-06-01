@@ -3,6 +3,7 @@ from ast import Str
 from dataclasses import dataclass
 from enum import IntEnum
 import struct
+import binascii
 
 class ResponseType(IntEnum):
     RESPONSE_OK = 1
@@ -65,7 +66,8 @@ def responseFactory(bindata : bytearray) -> Response:
         rspType = ResponseType(int(bindata[1]))
     except ValueError:
         raise ValueError("Uknown response type")
-    
+    print("Hex: Respuesta")
+    print(binascii.hexlify(bindata,'-'))
     if rspType == ResponseType.RESPONSE_OK:
         return ResponseOK.fromBinaryData()
     elif rspType == ResponseType.RESPONSE_INFO_POSITION:

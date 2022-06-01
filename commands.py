@@ -50,7 +50,6 @@ class PositionModeCommand(Command):
     binaryFormat: Str = "<Bii" #uint8 int int
     commandReference = CommandType.POSITION_MODE
     
-
     def __init__(self,axis : int,targetPosition : int,speed : int):
         self.targetPosition = targetPosition
         self.speed = speed
@@ -97,4 +96,84 @@ class PositionModeCommand(Command):
         else:
             raise Exception("Unknown Error")
                 
+@dataclass
+class ManualModeCommand(Command):
+    additionalData: bool = True
+    binaryFormat: Str = "<Bi" #uint8 int int
+    commandReference = CommandType.MANUAL_MODE
+    
+    def __init__(self,axis : int,speed : int):
+        self.speed = speed
+        self.axis = axis
+        self.status = CommandStatus.COMMAND_CREATED
+
+    @classmethod
+    def fromBinaryData(self,bindata: bytearray):
+        return PositionModeCommand(struct.unpack(self.binaryFormat,bytes(bindata)))
+    
+    def getBinaryData(self) -> bytearray:
+        return bytearray(struct.pack(self.binaryFormat,self.axis,self.speed))
+
+    def confirmSentData(self) -> None:
+        self.status = CommandStatus.COMMAND_SENT
+
+    def protocolCallback(self,rsp: Response) -> Boolean:
+        if self.status != CommandStatus.COMMAND_SENT and self.status != CommandStatus.COMMAND_DOING:
+            self.status == CommandStatus.COMMAND_ERROR
+            return
+        if self.status == CommandStatus.COMMAND_SENT:
+            if rsp.responseReference !=  ResponseType.RESPONSE_OK:
+                #Check status to error
+                self.status = CommandStatus.COMMAND_ERROR
+                #If the first received message is not an error nor ok something is fucked
+                if rsp.responseReference != ResponseType.RESPONSE_ERROR:
+                    raise Exception("Protocol Error")
+                #If normal error raise it
+                raise Exception("Parameter Error")
+            #If the response is an OK, change status
+            self.status = CommandStatus.COMMAND_FINISHED
+            print("Moviendose")
+            return True #We have finished command
+        else:
+            raise Exception("Unknown Error")
+
+class GetCurrentPositionCommand(Command):
+    additionalData: bool = True
+    binaryFormat: Str = "<B" #uint8 int int
+    commandReference = CommandType.GET_CURRENT_POSITION
+    
+    def __init__(self,axis : int):
+        self.axis = axis
+        self.status = CommandStatus.COMMAND_CREATED
+
+    @classmethod
+    def fromBinaryData(self,bindata: bytearray):
+        return PositionModeCommand(struct.unpack(self.binaryFormat,bytes(bindata)))
+    
+    def getBinaryData(self) -> bytearray:
+        return bytearray(struct.pack(self.binaryFormat,self.axis))
+
+    def confirmSentData(self) -> None:
+        self.status = CommandStatus.COMMAND_SENT
+
+    def protocolCallback(self,rsp: Response) -> Boolean:
+        if self.status != CommandStatus.COMMAND_SENT and self.status != CommandStatus.COMMAND_DOING:
+            self.status == CommandStatus.COMMAND_ERROR
+            return
+        if self.status == CommandStatus.COMMAND_SENT:
+            if rsp.responseReference !=  ResponseType.RESPONSE_INFO_POSITION:
+                #Check status to error
+                self.status = CommandStatus.COMMAND_ERROR
+                #If the first received message is not an error nor ok something is fucked
+                if rsp.responseReference != ResponseType.RESPONSE_ERROR:
+                    raise Exception("Protocol Error")
+                #If normal error raise it
+                raise Exception("Parameter Error")
+            #If the response is an OK, change status
+            self.status = CommandStatus.COMMAND_FINISHED
+            print(rsp.currentPosition)
+            return True #We have finished command
+        else:
+            raise Exception("Unknown Error")
+
 

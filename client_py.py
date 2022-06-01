@@ -1,13 +1,17 @@
 from ast import Num
 from email import header
 from socket import timeout
+from turtle import position
 from typing import Callable, List
 from twisted.internet.protocol import Protocol, ClientFactory
 from twisted.internet import reactor
 from sys import stdout
 import binascii
 
-from commands import PositionModeCommand,ManualModeCommand, Command
+from waiting import wait
+import time
+
+from commands import CommandStatus, PositionModeCommand,GetCurrentPositionCommand,ManualModeCommand, Command
 from responses import responseFactory
 
 
@@ -24,14 +28,16 @@ class TeknicClient(Protocol):
         #On connection made, we need to broadcast the command with the array
         cmdBin = self.factory.command.getBinaryData()
         actionTcpMessage = self.buildPackage(self.factory.command.commandReference,cmdBin)
-        print(binascii.hexlify(bytearray(actionTcpMessage),'-'))
+        #print(binascii.hexlify(bytearray(actionTcpMessage),'-'))
         self.transport.write(bytes(actionTcpMessage))
+        #Reinit buffer
+        self.rcvBuff = bytearray([])
         #Setting new state on the command
         self.factory.command.confirmSentData()
         self.timeoutObject = reactor.callLater(self.timeout, self.transport.loseConnection)
     
     def connectionLost(self, reason):
-        print("YO LOST")
+        pass
 
     def dataReceived(self, data) -> None:
         #First append data to buffer
@@ -105,19 +111,52 @@ class TeknicClientFactory(ClientFactory):
         return p
 
     def clientConnectionLost(self, connector, reason):
-        print('Lost connection.  Reason:', reason)
-        reactor.stop()
+        pass
+        #print('Lost connection.  Reason:', reason)
+        #reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
-        print('Connection failed. Reason:', reason)
-        reactor.stop()
+        pass
+        #print('Connection failed. Reason:', reason)
+        #reactor.stop()
 
-def launch_velocity_mode():
-    
+def launch_velocity_mode(speed) -> Command:
+    print("Launch Speed Command")
+    action = ManualModeCommand(0,speed)
+    reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    return action
+
+def getPosition() -> Command:
+    print("Get Position Command")
+    action = GetCurrentPositionCommand(0)
+    reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    return action
+
+def loop():
+    action = launch_velocity_mode(3000)
+    wait(lambda : action.status == CommandStatus.COMMAND_FINISHED,timeout_seconds=100)
+    ref = time.time()
+    ref2 = time.time()
+    cnt = 1
+    while(True):
+        now = time.time()
+        elapsed_time = now-ref
+        elapsed_time2 = now-ref2
+        if elapsed_time >= 0.5: 
+            postion_action = getPosition()
+            wait(lambda : postion_action.status == CommandStatus.COMMAND_FINISHED,timeout_seconds=600)
+            ref = now
+        if elapsed_time2 >= 60:
+            cnt  = -cnt
+            action = launch_velocity_mode(3000*cnt)
+            wait(lambda : postion_action.status == CommandStatus.COMMAND_FINISHED,timeout_seconds=10)
+            ref2 = now
+
+
 
 if __name__ == "__main__":
     #Create command with data
-    #action = PositionModeCommand(0,30000,3000)
-    action = ManualModeCommand(0,3000)
-    reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    #action = GetCurrentPositionCommand(0)
+    #reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    reactor.callInThread(loop)
     reactor.run()
