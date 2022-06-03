@@ -30,6 +30,7 @@ class Command(ABC):
     commandReference : CommandType
     additionalData : bool
     binaryFormat: Str
+    errorCode: int
 
     @classmethod
     def fromBinaryData(self,bindata : bytearray):
@@ -78,6 +79,7 @@ class PositionModeCommand(Command):
                 if rsp.responseReference != ResponseType.RESPONSE_ERROR:
                     raise Exception("Protocol Error")
                 #If normal error raise it
+                self.errorCode = rsp.responseReference
                 raise Exception("Parameter Error")
             #If the response is an OK, change status
             self.status = CommandStatus.COMMAND_DOING

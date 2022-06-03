@@ -48,14 +48,15 @@ class ResponsePosition(Response):
 @dataclass
 class ResponseError(Response):
     additionalData: bool = False
-    binaryFormat: Str = ">i"    
+    binaryFormat: Str = ">B"    
 
-    def __init__(self):
+    def __init__(self,errorCode):
+        self.errorCode = errorCode
         self.responseReference = ResponseType.RESPONSE_ERROR
 
     @classmethod
     def fromBinaryData(self,bindata: bytearray = None):
-        return ResponseError(struct.unpack(self.binaryFormat,bytes(bindata)))
+        return ResponseError(struct.unpack(self.binaryFormat,bytes(bindata))[0])
 
 
 def responseFactory(bindata : bytearray) -> Response:
