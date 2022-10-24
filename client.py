@@ -116,7 +116,7 @@ class TeknicClientFactory(ClientFactory):
 
 if __name__ == "__main__":
     #Create command with data
-    action = PositionModeCommand(0,30000,3000)
+    action = PositionModeCommand(0,30000,10000)
     #action = ManualModeCommand(0,3000)
-    reactor.connectTCP("10.0.0.2", 8888, TeknicClientFactory(action))
+    reactor.connectTCP("10.0.0.3", 8888, TeknicClientFactory(action))
     reactor.run()

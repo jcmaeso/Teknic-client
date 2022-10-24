@@ -123,13 +123,13 @@ class TeknicClientFactory(ClientFactory):
 def launch_velocity_mode(speed) -> Command:
     print("Launch Speed Command")
     action = ManualModeCommand(0,speed)
-    reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    reactor.connectTCP("10.0.0.3", 8888, TeknicClientFactory(action))
     return action
 
 def getPosition() -> Command:
     print("Get Position Command")
     action = GetCurrentPositionCommand(0)
-    reactor.connectTCP("10.0.0.92", 8888, TeknicClientFactory(action))
+    reactor.connectTCP("10.0.0.3", 8888, TeknicClientFactory(action))
     return action
 
 def loop():

@@ -47,15 +47,19 @@ class Command(ABC):
 
 @dataclass
 class PositionModeCommand(Command):
-    additionalData: bool = True
-    binaryFormat: Str = "<Bii" #uint8 int int
-    commandReference = CommandType.POSITION_MODE
+    #additionalData: bool = True
+    #binaryFormat: Str = "<Bii" #uint8 int int
+    #commandReference = CommandType.POSITION_MODE
     
     def __init__(self,axis : int,targetPosition : int,speed : int):
         self.targetPosition = targetPosition
         self.speed = speed
         self.axis = axis
         self.status = CommandStatus.COMMAND_CREATED
+        #Super class parameters
+        self.additionalData = True
+        self.binaryFormat = "<Bii"
+        self.commandReference = CommandType.POSITION_MODE
 
     @classmethod
     def fromBinaryData(self,bindata: bytearray):
@@ -100,14 +104,15 @@ class PositionModeCommand(Command):
                 
 @dataclass
 class ManualModeCommand(Command):
-    additionalData: bool = True
-    binaryFormat: Str = "<Bi" #uint8 int int
-    commandReference = CommandType.MANUAL_MODE
-    
     def __init__(self,axis : int,speed : int):
         self.speed = speed
         self.axis = axis
         self.status = CommandStatus.COMMAND_CREATED
+
+        #Super class data
+        self.additionalData = True
+        self.binaryFormat = "<Bi" #uint8 int int
+        self.commandReference = CommandType.MANUAL_MODE
 
     @classmethod
     def fromBinaryData(self,bindata: bytearray):
@@ -139,14 +144,15 @@ class ManualModeCommand(Command):
         else:
             raise Exception("Unknown Error")
 
-class GetCurrentPositionCommand(Command):
-    additionalData: bool = True
-    binaryFormat: Str = "<B" #uint8 int int
-    commandReference = CommandType.GET_CURRENT_POSITION
-    
+class GetCurrentPositionCommand(Command):    
     def __init__(self,axis : int):
         self.axis = axis
         self.status = CommandStatus.COMMAND_CREATED
+        
+        #Super class parameters
+        self.additionalData= True
+        self.binaryFormat = "<B" #uint8 int int
+        self.commandReference = CommandType.GET_CURRENT_POSITION
 
     @classmethod
     def fromBinaryData(self,bindata: bytearray):
